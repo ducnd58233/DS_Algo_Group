@@ -5,32 +5,50 @@ public class Solution {
     public static void main(String[] args) {
         File inFile = null;
         int rows, cols;
-        char[][] matrix;
-        
+        String[][] matrix;
+
+        // Check if the input missing file name
         if (args.length <= 0) {
             System.err.println("Missing arguments input file name!");
             System.exit(1);
         }
+
+        // Check if the file name is exist in directory
         try {
             inFile = new File(args[0]);
-
             Scanner sc = new Scanner(inFile);
             rows = sc.nextInt();
             cols = sc.nextInt();
             sc.nextLine();
-            matrix = new char[rows][cols];
 
+            // Check if rows is in range 1 to 27
+            if ((rows <= 0 || rows > 27) && (cols <= 0 || cols > 27)) {
+                System.err.println("Rows and Columns need no less than 1 and no more than 27");
+                System.exit(1);
+            }
+
+            matrix = new String[rows][cols];
+
+            // Read the input of matrix
             for (int r = 0; r < rows; r++) {
                 String line = sc.nextLine();
-                int c = 0;
-                for(char ch: line.toCharArray()) {
-                    matrix[r][c] = ch;
-                    c++;
+                String[] parts = line.split(" ");
+                for (int c = 0; c < cols; c++) {
+                    matrix[r][c] = parts[c];
+                    // Check if gold of matrix is more than 0
+                    if (!matrix[r][c].equals("x") && !matrix[r][c].equals("X")
+                    && !matrix[r][c].equals(".") && Long.parseLong(matrix[r][c]) <= 0) 
+                    {
+                        System.err.println("GOLD must be Z+");
+                        System.exit(1);
+                    }
                 }
             }
 
-            int[][] matrixInt1 = convertMatrixToIntMatrix(matrix, rows, cols);
-            int[][] matrixInt2 = convertMatrixToIntMatrix(matrix, rows, cols);
+            // Convert String array to Numeric array for calculation
+            // Create 2 different numeric array to compare 2 different algorithms
+            long[][] matrixInt1 = convertStringMatrixToNumericMatrix(matrix, rows, cols);
+            long[][] matrixInt2 = convertStringMatrixToNumericMatrix(matrix, rows, cols);
 
             // Backtracking algorithm
             long startTime1 = System.currentTimeMillis();
@@ -52,19 +70,25 @@ public class Solution {
 
             sc.close();
 
-        } catch (Exception e) {
+        }
+
+        catch (Exception e) {
             System.out.println("Error reading file: " + e);
-        }    
+        }
     }
- 
-    public static int[][] convertMatrixToIntMatrix(char[][] matrix, int rows, int cols) {
-        int[][] goldTable = new int[rows][cols];
+
+    // Convert String Matrix to Numeric Matrix
+    public static long[][] convertStringMatrixToNumericMatrix(String[][] matrix, int rows, int cols) {
+        long[][] goldTable = new long[rows][cols];
 
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
-                if(matrix[i][j] == 'x' || matrix[i][j] == 'X') goldTable[i][j] = -1;
-                else if (matrix[i][j] == '.') goldTable[i][j] = 0;
-                else goldTable[i][j] = Character.getNumericValue(matrix[i][j]);
+                if (matrix[i][j].equals("x") || matrix[i][j].equals("X"))
+                    goldTable[i][j] = -1;
+                else if (matrix[i][j].equals("."))
+                    goldTable[i][j] = 0;
+                else
+                    goldTable[i][j] = Long.parseLong(matrix[i][j]);
             }
         }
 
@@ -72,26 +96,30 @@ public class Solution {
     }
 }
 
+// Backtracking (exhaustive search algorithms) algorithm
 // Time complexity: O(2 ^(m x n))
 // Space complexity: O(m x n)
 class BackTracking {
-    int[][] matrix;
+    long[][] matrix;
     int rows, cols;
-    int max_gold = 0;
+    long max_gold = 0;
     String cur_path = "";
     String best_path = "";
 
-    public BackTracking(int[][] matrix, int rows, int cols) {
+    public BackTracking(long[][] matrix, int rows, int cols) {
         this.matrix = matrix;
         this.rows = rows;
         this.cols = cols;
     }
 
+    // Check if the current position is still in matrix length and able to move
     public boolean canMove(int x, int y) {
         return (x >= 0 && x <= rows - 1) && (y >= 0 && y <= cols - 1) && matrix[x][y] >= 0;
     }
 
-    public void findPath(int[][] matrix, int m, int n, int cur_row, int cur_col, int cur_gold) {
+    // The main method of Backtracking algorithm
+    public void findPath(long[][] matrix, int m, int n, int cur_row, int cur_col, long cur_gold) {
+        // Check if the current path has max gold and min path
         if (max_gold == cur_gold && cur_path.length() < best_path.length()) {
             best_path = cur_path;
         } else if (max_gold < cur_gold) {
@@ -99,32 +127,35 @@ class BackTracking {
             best_path = cur_path;
         }
 
-        if (canMove(cur_row + 1, cur_col)) {    
-            cur_path += "D";      
+        // Go down the matrix
+        if (canMove(cur_row + 1, cur_col)) {
+            cur_path += "D";
             findPath(matrix, m, n, cur_row + 1, cur_col, cur_gold + matrix[cur_row + 1][cur_col]);
-            cur_path = cur_path.substring(0, cur_path.length()-1);
+            cur_path = cur_path.substring(0, cur_path.length() - 1);
         }
-        
 
+        // Go right the matrix
         if (canMove(cur_row, cur_col + 1)) {
             cur_path += "R";
             findPath(matrix, m, n, cur_row, cur_col + 1, cur_gold + matrix[cur_row][cur_col + 1]);
-            cur_path = cur_path.substring(0, cur_path.length()-1);
+            cur_path = cur_path.substring(0, cur_path.length() - 1);
         }
-        
+
     }
 
+    // Print the final result
     public void printResult() {
         System.out.printf("Steps: %d, Gold: %d, Path: %s\n", best_path.length(), max_gold, best_path);
     }
 }
 
+// Dynamic algorithm
 // Time complexity: O(m x n)
 // Space complexity: O(m x n)
 class DynamicProgramming {
-    int[][] matrix;
+    long[][] matrix;
     int rows, cols;
-    int max_gold = 0;
+    long max_gold = 0;
     int min_stop = 0;
     int min_row = 0;
     int min_col = 0;
@@ -132,43 +163,52 @@ class DynamicProgramming {
     int stop_col = 0;
     String path = "";
 
-    public DynamicProgramming(int[][] matrix, int rows, int cols) {
+    public DynamicProgramming(long[][] matrix, int rows, int cols) {
         this.matrix = matrix;
         this.cols = cols;
         this.rows = rows;
     }
 
+    // Check if the current position is still in matrix length and able to move
     public boolean canMove(int x, int y) {
         return (x >= 0 && x <= rows - 1) && (y >= 0 && y <= cols - 1) && matrix[x][y] >= 0;
     }
 
-    public void findPath(int[][] matrix, int m, int n) {
-        int[][] dp = new int[m][n];
-        char[][] trace = new char[m][n];
+    // The main method of Dynamic algorithm
+    public void findPath(long[][] matrix, int m, int n) {
+        long[][] dp = new long[m][n]; // matrix to check the path that we go have the max gold
+        char[][] trace = new char[m][n]; // matrix tracking the best path to go
 
+        // Create the matrix to check the path that we go have the max gold
         for (int i = 0; i < m; i++) {
             for (int j = 0; j < n; j++) {
                 dp[i][j] = Integer.MIN_VALUE;
             }
         }
 
-        dp[0][0] = 0;
+        dp[0][0] = matrix[0][0];
+
+        // Calculate the gold in matrix dp and path in matrix trace
         for (int i = 0; i < m; i++) {
             for (int j = 0; j < n; j++) {
-                if (matrix[i][j] == -1) {
+                if (matrix[i][j] == -1) // This cell is rock cannot move
+                {
                     continue;
                 }
-                if (canMove(i + 1, j) && dp[i][j] + matrix[i + 1][j] > dp[i + 1][j]) {
+                if (canMove(i + 1, j) && dp[i][j] + matrix[i + 1][j] > dp[i + 1][j]) // Check the bottom cell
+                {
                     dp[i + 1][j] = dp[i][j] + matrix[i + 1][j];
                     trace[i + 1][j] = 'D';
                 }
-                if (canMove(i, j + 1) && dp[i][j] + matrix[i][j + 1] > dp[i][j + 1]) {
+                if (canMove(i, j + 1) && dp[i][j] + matrix[i][j + 1] > dp[i][j + 1]) // Check the right cell
+                {
                     dp[i][j + 1] = dp[i][j] + matrix[i][j + 1];
                     trace[i][j + 1] = 'R';
-                } 
+                }
             }
         }
 
+        // Loop back to dp matrix finout the max gold with min step
         for (int i = 0; i < m; i++) {
             for (int j = 0; j < n; j++) {
                 if (max_gold < dp[i][j] || (max_gold == dp[i][j] && i + j < min_stop)) {
@@ -183,6 +223,7 @@ class DynamicProgramming {
         int cur_row = min_row;
         int cur_col = min_col;
 
+        // Loop back to create the path way
         while (cur_row > 0 || cur_col > 0) {
             if (trace[cur_row][cur_col] == 'R') {
                 path = "R" + path;
@@ -194,6 +235,7 @@ class DynamicProgramming {
         }
     }
 
+    // Print the final result
     public void printResult() {
         System.out.printf("Steps: %d, Gold: %d, Path: %s\n", min_stop, max_gold, path);
     }
