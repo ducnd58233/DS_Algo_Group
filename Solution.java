@@ -35,13 +35,25 @@ public class Solution {
                 String[] parts = line.split(" ");
                 for (int c = 0; c < cols; c++) {
                     matrix[r][c] = parts[c];
-                    // Check if gold of matrix is more than 0
+
+                    // Check if gold of matrix is more than 0 or Invalid input
                     if (!matrix[r][c].equals("x") && !matrix[r][c].equals("X")
-                    && !matrix[r][c].equals(".") && Long.parseLong(matrix[r][c]) <= 0) 
+                    && !matrix[r][c].equals("."))
                     {
-                        System.err.println("GOLD must be Z+");
-                        System.exit(1);
-                    }
+                        try
+                        {
+                            if (Long.parseLong(matrix[r][c]) <= 0) 
+                            {
+                                System.err.println("GOLD must be Z+");
+                                System.exit(1);
+                            }
+                        }
+                        catch (Exception e) 
+                        {
+                            System.err.println("Invalid input data (Character must be ('X', 'x', '.' or a number)");
+                            System.exit(1);
+                        }
+                    }         
                 }
             }
 
@@ -51,6 +63,7 @@ public class Solution {
             long[][] matrixInt2 = convertStringMatrixToNumericMatrix(matrix, rows, cols);
 
             // Backtracking algorithm
+            System.out.println("Exhaustive Search Algorithm (Back tracking):");
             long startTime1 = System.currentTimeMillis();
             BackTracking bt = new BackTracking(matrixInt1, rows, cols);
             bt.findPath(matrixInt1, rows, cols, 0, 0, matrixInt1[0][0]);
@@ -60,6 +73,7 @@ public class Solution {
             System.out.printf("Exhaustive Search Algorithm (Back tracking) takes: %d milli-seconds\n", diff1);
 
             // Dynamic programming algorithm
+            System.out.println("Dynamic Programming Algorithm :");
             long startTime2 = System.currentTimeMillis();
             DynamicProgramming dp = new DynamicProgramming(matrixInt2, rows, cols);
             dp.findPath(matrixInt2, rows, cols);
@@ -72,7 +86,8 @@ public class Solution {
 
         }
 
-        catch (Exception e) {
+        catch (Exception e) 
+        {
             System.out.println("Error reading file: " + e);
         }
     }
@@ -159,8 +174,6 @@ class DynamicProgramming {
     int min_stop = 0;
     int min_row = 0;
     int min_col = 0;
-    int stop_row = 0;
-    int stop_col = 0;
     String path = "";
 
     public DynamicProgramming(long[][] matrix, int rows, int cols) {
